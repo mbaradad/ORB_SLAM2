@@ -35,50 +35,61 @@ if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
    endif()
 endif()
-
 find_package(Eigen3 3.1.0 REQUIRED)
-find_package(Pangolin REQUIRED)
+find_package(Pangolin)
 
-include_directories(
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include
-${EIGEN3_INCLUDE_DIR}
-${Pangolin_INCLUDE_DIRS}
+#set(USE_PANGOLIN Pangolin_FOUND)
+set(USE_PANGOLIN False)
+
+set(INCLUDE_DIRS
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/include
+        ${EIGEN3_INCLUDE_DIR}
 )
+if (USE_PANGOLIN)
+   set(INCLUDE_DIRS  ${INCLUDE_DIRS}
+           {Pangolin_INCLUDE_DIRS})
+endif()
+
+include_directories(${INCLUDE_DIRS})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
-add_library(${PROJECT_NAME} SHARED
-src/System.cc
-src/Tracking.cc
-src/LocalMapping.cc
-src/LoopClosing.cc
-src/ORBextractor.cc
-src/ORBmatcher.cc
-src/FrameDrawer.cc
-src/Converter.cc
-src/MapPoint.cc
-src/KeyFrame.cc
-src/Map.cc
-src/MapDrawer.cc
-src/Optimizer.cc
-src/PnPsolver.cc
-src/Frame.cc
-src/KeyFrameDatabase.cc
-src/Sim3Solver.cc
-src/Initializer.cc
-src/Viewer.cc)
+set(SOURCES src/System.cc
+        src/Tracking.cc
+        src/LocalMapping.cc
+        src/LoopClosing.cc
+        src/ORBextractor.cc
+        src/ORBmatcher.cc
+        src/Converter.cc
+        src/MapPoint.cc
+        src/FrameDrawer.cc
+        src/KeyFrame.cc
+        src/Map.cc
+        src/Optimizer.cc
+        src/PnPsolver.cc
+        src/Frame.cc
+        src/KeyFrameDatabase.cc
+        src/Sim3Solver.cc
+        src/Initializer.cc
+        src/Viewer.cc
+        src/MapDrawer.cc)
 
-target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${Pangolin_LIBRARIES}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-)
+add_library(${PROJECT_NAME} SHARED  ${SOURCES})
+
+set(LINK_LIBRARIES
+        ${OpenCV_LIBS}
+        ${EIGEN3_LIBS}
+        ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+        ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so)
+if (USE_PANGOLIN)
+   set(LINK_LIBRARIES ${LINK_LIBRARIES}
+           ${Pangolin_LIBRARIES})
+endif()
+target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARIES})
+
 
 # Build examples
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 
 add_executable(rgbd_tum

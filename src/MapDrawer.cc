@@ -21,7 +21,9 @@
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#ifdef USE_PANGOLIN
 #include <pangolin/pangolin.h>
+#endif
 #include <mutex>
 
 namespace ORB_SLAM2
@@ -40,7 +42,7 @@ MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
     mCameraLineWidth = fSettings["Viewer.CameraLineWidth"];
 
 }
-
+#ifdef USE_PANGOLIN
 void MapDrawer::DrawMapPoints()
 {
     const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
@@ -219,12 +221,6 @@ void MapDrawer::DrawCurrentCamera(pangolin::OpenGlMatrix &Twc)
 }
 
 
-void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
-{
-    unique_lock<mutex> lock(mMutexCamera);
-    mCameraPose = Tcw.clone();
-}
-
 void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
 {
     if(!mCameraPose.empty())
@@ -260,5 +256,18 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
     else
         M.SetIdentity();
 }
+
+void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
+{
+    unique_lock<mutex> lock(mMutexCamera);
+    mCameraPose = Tcw.clone();
+}
+
+#else
+void MapDrawer::DrawMapPoints(){}
+void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph){}
+void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw){}
+void MapDrawer::SetReferenceKeyFrame(KeyFrame *pKF){}
+#endif
 
 } //namespace ORB_SLAM

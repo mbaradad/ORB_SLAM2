@@ -19,7 +19,10 @@
 */
 
 #include "Viewer.h"
+
+#ifdef USE_PANGOLIN
 #include <pangolin/pangolin.h>
+#endif
 
 #include <mutex>
 
@@ -51,6 +54,7 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
     mViewpointF = fSettings["Viewer.ViewpointF"];
 }
 
+#ifdef USE_PANGOLIN
 void Viewer::Run()
 {
     mbFinished = false;
@@ -167,6 +171,10 @@ void Viewer::Run()
 
     SetFinish();
 }
+#else
+void Viewer::Run(){}
+#endif
+
 
 void Viewer::RequestFinish()
 {
