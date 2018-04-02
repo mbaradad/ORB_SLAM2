@@ -20,6 +20,17 @@ PYBIND11_MODULE(orb_slam2, m) {
 
         Do slam on the list of filenames
     )pbdoc");
+  m.def("predefined_main", &predefined_main, R"pbdoc(
+        predefined_main
+
+        Do predefined_main
+    )pbdoc");
+
+  m.def("main_paths", &main_paths, R"pbdoc(
+        main_paths
+
+        Do main_paths
+    )pbdoc");
 
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;

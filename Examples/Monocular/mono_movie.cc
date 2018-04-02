@@ -4,7 +4,7 @@
 * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
 * For more information see <https://github.com/raulmur/ORB_SLAM2>
 *
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
+* ORB-SLAM2 is free softpare: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
@@ -176,17 +176,27 @@ int predefined_main(){
 
   LoadImages(string("../local_data/titanic_1997"), vstrImageFilenames, vTimestamps);
 
-  slamOnImageFilenamesList(vstrImageFilenames, "Examples/Monocular/movie.yaml","Examples/Monocular/movie.yaml", vTimestamps);
+  slamOnImageFilenamesList(vstrImageFilenames, "Vocabulary/ORBvoc.txt", "Examples/Monocular/movie.yaml", vTimestamps);
+  return 1;
+}
 
+int main_paths(string data, string vocabulary, string yaml_config){
+  // Retrieve paths to images
+  vector<string> vstrImageFilenames;
+  vector<double> vTimestamps;
+
+  LoadImages(data, vstrImageFilenames, vTimestamps);
+
+  slamOnImageFilenamesList(vstrImageFilenames, vocabulary, yaml_config, vTimestamps);
+  return 1;
 }
 
 int main(int argc, char **argv)
 {
   if(argc != 4)
   {
-    cerr << endl << "No or incorrect number of arguments provided, using predefined main" << endl;
-    predefined_main();
-    return 0;
+    cout << "No or incorrect number of arguments provided, using predefined main" << endl;
+    return predefined_main();
   }
 
   // Retrieve paths to images
