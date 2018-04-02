@@ -169,12 +169,24 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
 
 }
 
+int predefined_main(){
+  // Retrieve paths to images
+  vector<string> vstrImageFilenames;
+  vector<double> vTimestamps;
+
+  LoadImages(string("../local_data/titanic_1997"), vstrImageFilenames, vTimestamps);
+
+  slamOnImageFilenamesList(vstrImageFilenames, "Examples/Monocular/movie.yaml","Examples/Monocular/movie.yaml", vTimestamps);
+
+}
+
 int main(int argc, char **argv)
 {
     if(argc != 4)
     {
-        cerr << endl << "Usage: ./mono_movie path_to_vocabulary path_to_settings path_to_sequence" << endl;
-        return 1;
+      cerr << endl << "No or incorrect number of arguments provided, using predefined main" << endl;
+      predefined_main();
+      return 0;
     }
 
     // Retrieve paths to images
@@ -183,7 +195,6 @@ int main(int argc, char **argv)
     LoadImages(string(argv[3]), vstrImageFilenames, vTimestamps);
 
     slamOnImageFilenamesList(vstrImageFilenames, argv[1],argv[2], vTimestamps);
-
 }
 
 void LoadImages(const string &strPathToSequence, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)

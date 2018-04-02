@@ -1,1 +1,1 @@
-import .build/orb_slam2
+import build/orb_slam2
