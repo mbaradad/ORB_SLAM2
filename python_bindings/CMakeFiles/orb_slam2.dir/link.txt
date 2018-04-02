@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC  -std=c++11  -shared  -o orb_slam2.cpython-35m-x86_64-linux-gnu.so CMakeFiles/orb_slam2.dir/src/main.cpp.o -flto 
