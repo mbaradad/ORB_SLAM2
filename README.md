@@ -1,3 +1,8 @@
+# Modified with python bindings
+This is not a fully functioning repo (though I plan to improve it in the near future).
+Despite this, the code in python_bindings is functional and it can be compiled and used by first compiling the orb_slam2 project, moving .sos to the bindings dir and then compiling the bindings.
+For now, the cmake detects whether pangolin is installed or not, and builds the viewer or not accordingly.
+
 # ORB-SLAM2
 **Authors:** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
 
