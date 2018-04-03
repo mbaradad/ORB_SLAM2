@@ -77,6 +77,10 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
+
+    void setFrameForTrack(const cv::Mat &im, const double &timestamp);
+    cv::Mat trackCurrentFrame();
+
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
     // This resumes local mapping thread and performs SLAM again.
@@ -122,6 +126,8 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     Map* GetMap();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+
+    Frame GetCurrentFrame();
 
 private:
 

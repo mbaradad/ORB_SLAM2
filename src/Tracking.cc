@@ -235,34 +235,45 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     return mCurrentFrame.mTcw.clone();
 }
 
-
-cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
-{
+void Tracking::createFrame(const cv::Mat &im, const double &timestamp)
+  {
     mImGray = im;
 
     if(mImGray.channels()==3)
     {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
-        else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+      if(mbRGB)
+        cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+      else
+        cvtColor(mImGray,mImGray,CV_BGR2GRAY);
     }
     else if(mImGray.channels()==4)
     {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
-        else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+      if(mbRGB)
+        cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+      else
+        cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
     }
 
     if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
-        mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+      mCurrentFrame =  Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
     else
-        mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+      mCurrentFrame =  Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+  }
 
-    Track();
+cv::Mat Tracking::trackCurrentFrame()
+    {
+      Track();
 
-    return mCurrentFrame.mTcw.clone();
+      return mCurrentFrame.mTcw.clone();
+    }
+
+cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
+{
+
+    createFrame(im, timestamp);
+    //orb features are computed when the frame is created.
+    //now we can edit them before tracking
+    return trackCurrentFrame();
 }
 
 void Tracking::Track()

@@ -187,6 +187,11 @@ public:
 
     static bool mbInitialComputations;
 
+    void DropMVKeys(std::vector<bool>& keysToDrop);
+    void SetMVDescriptors(cv::Mat& descriptors);
+
+    std::vector<cv::Mat> GetMVKeys();
+    cv::Mat GetMVDescriptors();
 
 private:
 

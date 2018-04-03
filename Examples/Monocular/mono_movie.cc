@@ -98,7 +98,7 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
   int n_lost = 0;
 
   //#ni=240245
-  for(int ni=52400; ni<nImages; ni++)
+  for(int ni=67000; ni<nImages; ni++)
   {
     // Read image from file
     im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
@@ -118,7 +118,19 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
 #endif
 
     // Pass the image to the SLAM system
-    SLAM.TrackMonocular(im,tframe);
+    //SLAM.TrackMonocular(im,tframe);
+
+    SLAM.setFrameForTrack(im,tframe);
+    std::vector<cv::Mat> keys = SLAM.GetCurrentFrame().GetMVKeys();
+    cv::Mat descriptors = SLAM.GetCurrentFrame().GetMVDescriptors();
+    std::vector<bool> keysToDrop;
+    for (uint i= 0; i < keys.size(); ++i){
+      keysToDrop.push_back(false);
+    }
+    SLAM.GetCurrentFrame().DropMVKeys(keysToDrop);
+    SLAM.GetCurrentFrame().SetMVDescriptors(descriptors);
+    SLAM.trackCurrentFrame();
+
     int state = SLAM.GetTrackingState();
     cout << "State: " << state << endl;
     if (state == 2 and firstFrame == -1){
@@ -153,7 +165,7 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
   // Tracking time statistics
   sort(vTimesTrack.begin(),vTimesTrack.end());
   float totaltime = 0;
-  for(int ni=0; ni<nImages; ni++)
+  for(int ni=67000; ni<nImages; ni++)
   {
     totaltime+=vTimesTrack[ni];
   }
@@ -172,7 +184,7 @@ int predefined_main(){
   vector<string> vstrImageFilenames;
   vector<double> vTimestamps;
 
-  LoadImages(string("../local_data/titanic_1997"), vstrImageFilenames, vTimestamps);
+  LoadImages(string("../local_data/russian_ark"), vstrImageFilenames, vTimestamps);
 
   slamOnImageFilenamesList(vstrImageFilenames, "Vocabulary/ORBvoc.txt", "Examples/Monocular/movie.yaml", vTimestamps);
   return 1;

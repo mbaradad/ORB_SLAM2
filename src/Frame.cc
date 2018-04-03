@@ -679,4 +679,33 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         return cv::Mat();
 }
 
+std::vector<cv::Mat> Frame::GetMVKeys()
+{
+  std::vector<cv::Mat> keysAsMat;
+  for (uint i = 0; i < mvKeys.size(); ++i){
+    keysAsMat.push_back(cv::Mat(mvKeys[i].pt));
+  }
+  return keysAsMat;
+}
+
+cv::Mat Frame::GetMVDescriptors()
+{
+    return mDescriptors;
+}
+
+void Frame::DropMVKeys(std::vector<bool>& keysToDrop){
+  std::vector<cv::KeyPoint> finalKeys;
+  std::vector<cv::KeyPoint> finalKeysUn;
+  for (uint i = 0; i < keysToDrop.size(); ++i){
+    if (not keysToDrop[i]){
+      finalKeys.push_back(mvKeys[i]);
+      finalKeysUn.push_back(mvKeysUn[i]);
+    }
+  }
+  mvKeys = finalKeys;
+  mvKeysUn = finalKeysUn;
+}
+void Frame::SetMVDescriptors(cv::Mat& descriptors){
+    mDescriptors = descriptors;
+}
 } //namespace ORB_SLAM

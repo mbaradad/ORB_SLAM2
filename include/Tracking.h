@@ -71,6 +71,10 @@ public:
     // TODO: Modify MapPoint::PredictScale to take into account focal lenght
     void ChangeCalibration(const string &strSettingPath);
 
+
+    void createFrame(const cv::Mat &im, const double &timestamp);
+    cv::Mat trackCurrentFrame();
+
     // Use this function if you have deactivated local mapping and you only want to localize the camera.
     void InformOnlyTracking(const bool &flag);
 

@@ -38,13 +38,12 @@ endif()
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin)
 
-set(USE_PANGOLIN Pangolin_FOUND)
-if (USE_PANGOLIN)
-   message(STATUS "Pangolin NOT found")
+if (Pangolin_FOUND)
+   message(STATUS "Using Pangolin")
+   add_definitions(-DUSE_PANGOLIN)
 else()
-   message(STATUS "Pangolin found")
+   message(STATUS "Pangolin not found")
 endif()
-
 
 set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}
