@@ -26,3 +26,4 @@ lib/
 */.idea/*
 dist/
 dist*
+*.egg-info*

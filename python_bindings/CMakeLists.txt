@@ -1,12 +1,13 @@
 #TODO: this compiles/works with python3, but should be beautified
-
 cmake_minimum_required(VERSION 2.8)
 project(orb_slam2)
 
 set(ORB_SOURCE_DIR "..")
 
 add_subdirectory(pybind11)
-pybind11_add_module(orb_slam2 orb_slam_bindings.cpp)
+pybind11_add_module(orb_slam2
+        src/orb_slam_bindings.cpp
+        src/ndarray_converter.cpp)
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -34,25 +35,21 @@ if(NOT OpenCV_FOUND)
     endif()
 endif()
 
-#find_package(Eigen3 3.1.0 REQUIRED)
+#find_package(Eigen3 REQUIRED)
 find_package(Eigen3 REQUIRED)
-#find_package(Pangolin REQUIRED)
 
 include_directories(
+        "src"
         "${ORB_SOURCE_DIR}/"
         "${ORB_SOURCE_DIR}/include"
         ${EIGEN3_INCLUDE_DIR}
-#        ${Pangolin_INCLUDE_DIRS}
 )
 
 #The private tag is important (and not as obvious from pybind11 doc)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${OpenCV_LIBS}
     ${EIGEN3_LIBS}
-    #ignore pangolin as we don't want server side display
-    #todo: make it optional
-    #${Pangolin_LIBRARIES}
     ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
     ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
     ${PROJECT_SOURCE_DIR}/lib/libORB_SLAM.so
-    )
+)

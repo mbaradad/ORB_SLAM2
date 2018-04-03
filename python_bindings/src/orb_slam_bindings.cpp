@@ -1,10 +1,12 @@
 #include <pybind11/pybind11.h>
 #include "System.h"
 #include "Map.h"
-
+#include "ndarray_converter.h"
 
 namespace py = pybind11;
 PYBIND11_MODULE(orb_slam2, m) {
+  NDArrayConverter::init_numpy();
+
   m.doc() = R"pbdoc(
         ORB_SLAM bindings
         -----------------------
@@ -26,8 +28,8 @@ PYBIND11_MODULE(orb_slam2, m) {
       .export_values();
 
   orb_slam2_system_class.def(py::init<const string, const string, const ORB_SLAM2::System::eSensor, const bool>(),
-          py::arg("strVocFile") = "Vocabulary/ORBvoc.txt",
-          py::arg("strSettingsFile") = "Examples/Monocular/movie.yaml",
+          py::arg("strVocFile") = "ORB_SLAM/Vocabulary/ORBvoc.txt",
+          py::arg("strSettingsFile") = "python_slam/default_config.yaml",
           py::arg("sensor") = ORB_SLAM2::System::eSensor::MONOCULAR,
           py::arg("bUseViewer") = false);
 
@@ -48,8 +50,8 @@ PYBIND11_MODULE(orb_slam2, m) {
   map_point_class.def("GetNormal", &ORB_SLAM2::MapPoint::GetNormal);
 
   //'KeyFrame class'
-  py::class_<ORB_SLAM2::KeyFrame> key_frame_class(m, "KeyFrame");
-  key_frame_class.def("GetNormal", &ORB_SLAM2::MapPoint::GetNormal);
+  //py::class_<ORB_SLAM2::KeyFrame> key_frame_class(m, "KeyFrame");
+  //key_frame_class.def("GetNormal", &ORB_SLAM2::MapPoint::GetNormal);
 
 
 #ifdef VERSION_INFO

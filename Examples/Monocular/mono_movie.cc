@@ -18,7 +18,6 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include<iostream>
 #include<algorithm>
 #include<fstream>
@@ -30,7 +29,6 @@
 #include"System.h"
 #include"Tracking.h"
 #include"utils.cpp"
-
 
 #include <ftw.h>
 
