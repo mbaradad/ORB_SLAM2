@@ -50,7 +50,7 @@ set(INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/include
         ${EIGEN3_INCLUDE_DIR}
 )
-if (USE_PANGOLIN)
+if (Pangolin_FOUND)
    set(INCLUDE_DIRS  ${INCLUDE_DIRS}
            {Pangolin_INCLUDE_DIRS})
 endif()
@@ -86,7 +86,7 @@ set(LINK_LIBRARIES
         ${EIGEN3_LIBS}
         ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
         ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so)
-if (USE_PANGOLIN)
+if (Pangolin_FOUND)
    set(LINK_LIBRARIES ${LINK_LIBRARIES}
            ${Pangolin_LIBRARIES})
 endif()

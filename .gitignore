@@ -27,3 +27,4 @@ lib/
 dist/
 dist*
 *.egg-info*
+*CMakeFiles*
