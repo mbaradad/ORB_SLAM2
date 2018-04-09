@@ -28,6 +28,8 @@
 
 #include"System.h"
 #include"Tracking.h"
+#include"TrackerConfig.h"
+
 #include"utils.cpp"
 
 #include <ftw.h>
@@ -78,11 +80,20 @@ using namespace std;
 void LoadImages(const string &strSequence, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
 
-void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &strVocFile, const string &strSettingsFile, vector<double> &vTimestamps){
+void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &strVocFile, const string &strSettingsFile, vector<double> &vTimestamps,
+                              ORB_SLAM2::TrackerConfig &config){
   int nImages = vstrImageFilenames.size();
 
   // Create SLAM system. It initializes all system threads and gets ready to process frames.
-  ORB_SLAM2::System SLAM(strVocFile, strSettingsFile,ORB_SLAM2::System::MONOCULAR,true);
+  ORB_SLAM2::ORBVocabulary* mpVocabulary = new ORB_SLAM2::ORBVocabulary();
+  bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+  if(!bVocLoad)
+  {
+    cerr << "Wrong path to vocabulary. " << endl;
+    cerr << "Falied to open at: " << strVocFile << endl;
+  }
+
+  ORB_SLAM2::System SLAM(mpVocabulary, strSettingsFile, config, ORB_SLAM2::System::MONOCULAR,true);
 
   // Vector for tracking time statistics
   vector<float> vTimesTrack;
@@ -96,9 +107,10 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
   cv::Mat im;
   int firstFrame = -1;
   int n_lost = 0;
+  int good_frames = 0;
 
   //#ni=240245
-  for(int ni=67000; ni<nImages; ni++)
+  for(int ni=0; ni<nImages; ni++)
   {
     // Read image from file
     im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
@@ -109,7 +121,7 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
       cerr << endl << "Failed to load image at: " << vstrImageFilenames[ni] << endl;
       return;
     }
-    cout << "Processing fame: " << ni << " of " << nImages << endl;
+    cout << "Processing frame: " << ni << " of " << nImages << endl;
 
 #ifdef COMPILEDWITHC11
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -120,7 +132,7 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
     // Pass the image to the SLAM system
     //SLAM.TrackMonocular(im,tframe);
 
-    SLAM.setFrameForTrack(im,tframe);
+    SLAM.SetFrameForTrack(im, tframe);
     std::vector<cv::Mat> keys = SLAM.GetCurrentFrame().GetMVKeys();
     cv::Mat descriptors = SLAM.GetCurrentFrame().GetMVDescriptors();
     std::vector<bool> keysToDrop;
@@ -129,16 +141,20 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
     }
     SLAM.GetCurrentFrame().DropMVKeys(keysToDrop);
     SLAM.GetCurrentFrame().SetMVDescriptors(descriptors);
-    SLAM.trackCurrentFrame();
+    SLAM.TrackCurrentFrame();
 
     int state = SLAM.GetTrackingState();
     cout << "State: " << state << endl;
     if (state == 2 and firstFrame == -1){
       firstFrame = ni;
-    }
-    else if (state == 3){
+    }else if(state == 2){
+      good_frames = good_frames + 1;
+    }else if (state == 3){
       cout << "Lost: " << n_lost;
       n_lost++;
+    }
+    if (good_frames == 10){
+      cout << SLAM.GetAllPoses()[0].first << endl;
     }
 
     if (state == 3 and n_lost > 0){
@@ -184,20 +200,13 @@ int predefined_main(){
   vector<string> vstrImageFilenames;
   vector<double> vTimestamps;
 
-  LoadImages(string("../local_data/russian_ark"), vstrImageFilenames, vTimestamps);
+  LoadImages(string("../local_data/russian_ark_bad_init_sequence"), vstrImageFilenames, vTimestamps);
 
-  slamOnImageFilenamesList(vstrImageFilenames, "Vocabulary/ORBvoc.txt", "Examples/Monocular/movie.yaml", vTimestamps);
-  return 1;
-}
+  ORB_SLAM2::TrackerConfig config = ORB_SLAM2::TrackerConfig::defaultSettings();
+  config.Camera_fx = 100;
+  config.Camera_fy = 100;
 
-int main_paths(string data, string vocabulary, string yaml_config){
-  // Retrieve paths to images
-  vector<string> vstrImageFilenames;
-  vector<double> vTimestamps;
-
-  LoadImages(data, vstrImageFilenames, vTimestamps);
-
-  slamOnImageFilenamesList(vstrImageFilenames, vocabulary, yaml_config, vTimestamps);
+  slamOnImageFilenamesList(vstrImageFilenames, "Vocabulary/ORBvoc_empty.txt", "Examples/Monocular/movie.yaml", vTimestamps, config);
   return 1;
 }
 
@@ -214,7 +223,13 @@ int main(int argc, char **argv)
   vector<double> vTimestamps;
   LoadImages(string(argv[3]), vstrImageFilenames, vTimestamps);
 
-  slamOnImageFilenamesList(vstrImageFilenames, argv[1],argv[2], vTimestamps);
+  LoadImages(string("../local_data/russian_ark_bad_init_sequence"), vstrImageFilenames, vTimestamps);
+
+  ORB_SLAM2::TrackerConfig config = ORB_SLAM2::TrackerConfig::defaultSettings();
+  config.Camera_fx = 550;
+  config.Camera_fy = 550;
+
+  slamOnImageFilenamesList(vstrImageFilenames, argv[1],argv[2], vTimestamps, config);
   return 1;
 }
 

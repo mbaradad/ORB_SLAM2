@@ -98,7 +98,133 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser->SetLocalMapper(mpLocalMapper);
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
+System::System(const string &strVocFile, const string &strSettingsFile, TrackerConfig& trackerConfig, const eSensor sensor, const bool bUseViewer):
+    mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false){
+#ifndef USE_PANGOLIN
+  if (bUseViewer)
+      cerr << "Trying to use Viewer, but it was compiled without PANGOLIN!\n" <<
+              "Recompile (installig Pangolin before) or disable viewer." << endl;
+#endif
+  //Check settings file
+  cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
+  if(!fsSettings.isOpened())
+  {
+    cerr << "Failed to open settings file at: " << strSettingsFile << endl;
+  }
+
+  mpVocabulary = new ORBVocabulary();
+  bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+  if(!bVocLoad)
+  {
+    cerr << "Wrong path to vocabulary. " << endl;
+    cerr << "Falied to open at: " << strVocFile << endl;
+  }
+
+  //Create KeyFrame Database
+  mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
+
+  //Create the Map
+  mpMap = new Map();
+
+  //Create Drawers. These are used by the Viewer
+  mpFrameDrawer = new FrameDrawer(mpMap);
+  mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
+
+  //Initialize the Tracking thread
+  //(it will live in the main thread of execution, the one that called this constructor)
+  mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+                           mpMap, mpKeyFrameDatabase, trackerConfig, mSensor);
+
+  //Initialize the Local Mapping thread and launch
+  mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
+  mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
+
+  //Initialize the Loop Closing thread and launch
+  mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
+  mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+
+  //Initialize the Viewer thread and launch
+  if(bUseViewer)
+  {
+    mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+    mptViewer = new thread(&Viewer::Run, mpViewer);
+    mpTracker->SetViewer(mpViewer);
+  }
+
+  //Set pointers between threads
+  mpTracker->SetLocalMapper(mpLocalMapper);
+  mpTracker->SetLoopClosing(mpLoopCloser);
+
+  mpLocalMapper->SetTracker(mpTracker);
+  mpLocalMapper->SetLoopCloser(mpLoopCloser);
+
+  mpLoopCloser->SetTracker(mpTracker);
+  mpLoopCloser->SetLocalMapper(mpLocalMapper);
+
+}
+
+
+System::System(ORB_SLAM2::ORBVocabulary* vocabulary, const string &strSettingsFile, TrackerConfig& trackerConfig, const eSensor sensor, const bool bUseViewer):
+    mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false){
+#ifndef USE_PANGOLIN
+      if (bUseViewer)
+      cerr << "Trying to use Viewer, but it was compiled without PANGOLIN!\n" <<
+              "Recompile (installig Pangolin before) or disable viewer." << endl;
+#endif
+      //Check settings file
+      cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
+      if(!fsSettings.isOpened())
+      {
+        cerr << "Failed to open settings file at: " << strSettingsFile << endl;
+      }
+
+      mpVocabulary = vocabulary;
+
+      //Create KeyFrame Database
+      mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
+
+      //Create the Map
+      mpMap = new Map();
+
+      //Create Drawers. These are used by the Viewer
+      mpFrameDrawer = new FrameDrawer(mpMap);
+      mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
+
+      //Initialize the Tracking thread
+      //(it will live in the main thread of execution, the one that called this constructor)
+      mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+                               mpMap, mpKeyFrameDatabase, trackerConfig, mSensor);
+
+      //Initialize the Local Mapping thread and launch
+      mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
+      mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
+
+      //Initialize the Loop Closing thread and launch
+      mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
+      mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+
+      //Initialize the Viewer thread and launch
+      if(bUseViewer)
+      {
+        mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+        mptViewer = new thread(&Viewer::Run, mpViewer);
+        mpTracker->SetViewer(mpViewer);
+      }
+
+      //Set pointers between threads
+      mpTracker->SetLocalMapper(mpLocalMapper);
+      mpTracker->SetLoopClosing(mpLoopCloser);
+
+      mpLocalMapper->SetTracker(mpTracker);
+      mpLocalMapper->SetLoopCloser(mpLoopCloser);
+
+      mpLoopCloser->SetTracker(mpTracker);
+      mpLoopCloser->SetLocalMapper(mpLocalMapper);
+
+    }
+
+
+    cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
 {
     if(mSensor!=STEREO)
     {
@@ -200,7 +326,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return Tcw;
 }
 
-void System::setFrameForTrack(const cv::Mat &im, const double &timestamp)
+void System::SetFrameForTrack(const cv::Mat &im, const double &timestamp)
   {
     if(mSensor!=MONOCULAR)
     {
@@ -246,7 +372,7 @@ void System::setFrameForTrack(const cv::Mat &im, const double &timestamp)
 
   }
 
-cv::Mat System::trackCurrentFrame()
+cv::Mat System::TrackCurrentFrame()
 {
   cv::Mat Tcw = mpTracker->trackCurrentFrame();
 
@@ -254,15 +380,14 @@ cv::Mat System::trackCurrentFrame()
   mTrackingState = mpTracker->mState;
   mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
   mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
-
   return Tcw;
-
 }
+
 
 cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 {
-  setFrameForTrack(im, timestamp);
-  return trackCurrentFrame();
+  SetFrameForTrack(im, timestamp);
+  return TrackCurrentFrame();
 }
 
 Frame System::GetCurrentFrame()
@@ -302,6 +427,7 @@ void System::Reset()
     mbReset = true;
 }
 
+
 void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
@@ -321,7 +447,7 @@ void System::Shutdown()
 
 #ifdef USE_PANGOLIN
     if(mpViewer)
-        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+      pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 #endif
 }
 
@@ -386,6 +512,7 @@ void System::SaveTrajectoryTUM(const string &filename)
     f.close();
     cout << endl << "trajectory saved!" << endl;
 }
+
 
 
 void System::SaveKeyFrameTrajectoryTUM(const string &filename)
@@ -479,6 +606,59 @@ void System::SaveTrajectoryKITTI(const string &filename)
     cout << endl << "trajectory saved!" << endl;
 }
 
+vector<pair<double, cv::Mat> > System::GetAllPoses()
+{
+
+  vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+  sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+
+  // Transform all keyframes so that the first keyframe is at the origin.
+  // After a loop closure the first keyframe might not be at the origin.
+  cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+  // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
+  // We need to get first the keyframe pose and then concatenate the relative transformation.
+  // Frames not localized (tracking failure) are not saved.
+
+  // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+  // which is true when tracking failed (lbL).
+  list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+  list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
+  vector<pair<double, cv::Mat> > allPoses;
+  for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(), lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
+  {
+    ORB_SLAM2::KeyFrame* pKF = *lRit;
+
+    cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
+
+    while(pKF->isBad())
+    {
+      //  cout << "bad parent" << endl;
+      Trw = Trw*pKF->mTcp;
+      pKF = pKF->GetParent();
+    }
+
+    Trw = Trw*pKF->GetPose()*Two;
+
+    cv::Mat Tcw = (*lit)*Trw;
+    cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
+    cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
+
+    cv::Mat actual_pose(3, 4, CV_32F);
+    Rwc.col(0).copyTo(actual_pose.col(0));
+    Rwc.col(1).copyTo(actual_pose.col(1));
+    Rwc.col(2).copyTo(actual_pose.col(2));
+    twc.copyTo(actual_pose.col(3));
+
+    pair<double, cv::Mat> actual_pose_with_timestamp;
+    actual_pose_with_timestamp.first = *lT;
+    actual_pose_with_timestamp.second = actual_pose;
+
+    allPoses.push_back(actual_pose_with_timestamp);
+  }
+  return allPoses;
+}
+
 int System::GetTrackingState()
 {
     unique_lock<mutex> lock(mMutexState);
@@ -494,6 +674,17 @@ vector<MapPoint*> System::GetTrackedMapPoints()
 {
     unique_lock<mutex> lock(mMutexState);
     return mTrackedMapPoints;
+}
+
+vector<double> System::GetAllKeyFramesTimestamps()
+{
+  vector<double> vpKFsTimestamps;
+  vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+  sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+  for (uint i = 0; i < vpKFs.size(); ++i){
+    vpKFsTimestamps.push_back(vpKFs[i]->mTimeStamp);
+  }
+  return vpKFsTimestamps;
 }
 
 vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()

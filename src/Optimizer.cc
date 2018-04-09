@@ -656,8 +656,12 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
         if(*pbStopFlag)
             return;
 
+    optimizer.save("tutorial_after.g2o");
+
     optimizer.initializeOptimization();
     optimizer.optimize(5);
+
+    optimizer.save("tutorial_after.g2o");
 
     bool bDoMore= true;
 

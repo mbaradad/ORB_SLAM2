@@ -29,3 +29,4 @@ dist*
 *.egg-info*
 *CMakeFiles*
 python_bindings/CMakeFiles
+cmake-build-debug/

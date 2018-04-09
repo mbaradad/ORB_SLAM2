@@ -35,6 +35,7 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
+#include "TrackerConfig.h"
 
 namespace ORB_SLAM2
 {
@@ -61,6 +62,10 @@ public:
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
     System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true);
 
+    System(const string &strVocFile, const string &strSettingsFile, TrackerConfig& Config, const eSensor sensor, const bool bUseViewer = true);
+
+    System(ORB_SLAM2::ORBVocabulary* vocabulary, const string &strSettingsFile, TrackerConfig& Config, const eSensor sensor, const bool bUseViewer = true);
+
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
@@ -77,9 +82,8 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
-
-    void setFrameForTrack(const cv::Mat &im, const double &timestamp);
-    cv::Mat trackCurrentFrame();
+    void SetFrameForTrack(const cv::Mat &im, const double &timestamp);
+    cv::Mat TrackCurrentFrame();
 
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
@@ -128,6 +132,10 @@ public:
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
     Frame GetCurrentFrame();
+    vector<double> GetAllKeyFramesTimestamps();
+
+    vector<pair<double, cv::Mat> > GetAllPoses();
+
 
 private:
 
