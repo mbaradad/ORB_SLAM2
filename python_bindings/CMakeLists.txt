@@ -25,6 +25,9 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+message(STATUS "WAAAAAAARNING! The DBoW and Thirdpart libraries must be recompiled on the folders and ../lib/libOrbSLAM.so must be moved to ./lib/ after compiling")
+
+
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 find_package(OpenCV 3.0 QUIET)
