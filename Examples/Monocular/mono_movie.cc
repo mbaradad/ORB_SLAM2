@@ -85,13 +85,7 @@ void slamOnImageFilenamesList(vector<string> &vstrImageFilenames, const string &
   int nImages = vstrImageFilenames.size();
 
   // Create SLAM system. It initializes all system threads and gets ready to process frames.
-  ORB_SLAM2::ORBVocabulary* mpVocabulary = new ORB_SLAM2::ORBVocabulary();
-  bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-  if(!bVocLoad)
-  {
-    cerr << "Wrong path to vocabulary. " << endl;
-    cerr << "Falied to open at: " << strVocFile << endl;
-  }
+  ORB_SLAM2::ORBVocabulary* mpVocabulary = ORB_SLAM2::System::createOrbVocabulary(strVocFile);
 
   ORB_SLAM2::System SLAM(mpVocabulary, strSettingsFile, config, ORB_SLAM2::System::MONOCULAR,true);
 
@@ -206,7 +200,7 @@ int predefined_main(){
   config.Camera_fx = 100;
   config.Camera_fy = 100;
 
-  slamOnImageFilenamesList(vstrImageFilenames, "Vocabulary/ORBvoc_empty.txt", "Examples/Monocular/movie.yaml", vTimestamps, config);
+  slamOnImageFilenamesList(vstrImageFilenames, "Vocabulary/ORBvoc.txt", "Examples/Monocular/movie.yaml", vTimestamps, config);
   return 1;
 }
 

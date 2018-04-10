@@ -7,7 +7,6 @@
 namespace py = pybind11;
 PYBIND11_MODULE(orb_slam2, m) {
   NDArrayConverter::init_numpy();
-
   m.doc() = R"pbdoc(
         ORB_SLAM bindings
         -----------------------
@@ -18,6 +17,9 @@ PYBIND11_MODULE(orb_slam2, m) {
            :toctree: _generate
            slamOnImageFilenamesList
     )pbdoc";
+
+  string defaultVocabularyFile = "ORB_SLAM/Vocabulary/ORBvoc.txt";
+  string defaultConfigFile = "python_slam/default_config.yaml";
 
   //'Map class'
   py::class_<ORB_SLAM2::Map> map_class(m, "Map");
@@ -42,6 +44,7 @@ PYBIND11_MODULE(orb_slam2, m) {
   //'TrackerConfig class'
   py::class_<ORB_SLAM2::TrackerConfig> orb_slam2_tracker_config_class(m, "TrackerConfig");
   orb_slam2_tracker_config_class.def(py::init(&ORB_SLAM2::TrackerConfig::defaultSettings));
+
   //all attributes read/writeable must be explicity said to be so
   orb_slam2_tracker_config_class.def_readwrite("Camera_fx", &ORB_SLAM2::TrackerConfig::Camera_fx);
   orb_slam2_tracker_config_class.def_readwrite("Camera_fy", &ORB_SLAM2::TrackerConfig::Camera_fy);
@@ -66,7 +69,8 @@ PYBIND11_MODULE(orb_slam2, m) {
 
   //'ORBVocabulary class'
   py::class_<ORB_SLAM2::ORBVocabulary> orb_slam2_orb_vocabulary_class(m, "ORBVocabulary");
-  orb_slam2_orb_vocabulary_class.def("loadFromTextFile", &ORB_SLAM2::ORBVocabulary::loadFromTextFile);
+  orb_slam2_orb_vocabulary_class.def_static("createOrbVocabulary", &ORB_SLAM2::System::createOrbVocabulary,
+                                           py::arg("strVocFile") = defaultVocabularyFile);
 
   //'System class'
   py::class_<ORB_SLAM2::System> orb_slam2_system_class(m, "OrbSlamSystem");
@@ -78,21 +82,24 @@ PYBIND11_MODULE(orb_slam2, m) {
       .export_values();
 
 
+
   orb_slam2_system_class.def(py::init<const string, const string, const ORB_SLAM2::System::eSensor, const bool>(),
-                           py::arg("strVocFile") = "ORB_SLAM/Vocabulary/ORBvoc.txt",
-                           py::arg("strSettingsFile") = "python_slam/default_config.yaml",
+                           py::arg("strVocFile") = defaultVocabularyFile,
+                           py::arg("strSettingsFile") = defaultConfigFile,
                            py::arg("sensor") = ORB_SLAM2::System::eSensor::MONOCULAR,
                            py::arg("bUseViewer") = false);
 
   orb_slam2_system_class.def(py::init<const string, const string, ORB_SLAM2::TrackerConfig&, const ORB_SLAM2::System::eSensor, const bool>(),
-                             py::arg("strVocFile") = "ORB_SLAM/Vocabulary/ORBvoc.txt",
-                             py::arg("strSettingsFile") = "python_slam/default_config.yaml",
+                             py::arg("strVocFile") = defaultVocabularyFile,
+                             py::arg("strSettingsFile") = defaultConfigFile,
                              py::arg("config") = ORB_SLAM2::TrackerConfig::defaultSettings(),
                              py::arg("sensor") = ORB_SLAM2::System::eSensor::MONOCULAR,
                              py::arg("bUseViewer") = false);
 
-  orb_slam2_system_class.def(py::init<ORB_SLAM2::ORBVocabulary&, const string, ORB_SLAM2::TrackerConfig&, const ORB_SLAM2::System::eSensor, const bool>(),
-                             py::arg("strSettingsFile") = "python_slam/default_config.yaml",
+
+  orb_slam2_system_class.def(py::init<ORB_SLAM2::ORBVocabulary*, const string, ORB_SLAM2::TrackerConfig&, const ORB_SLAM2::System::eSensor, const bool>(),
+                             py::arg("vocabulary"),
+                             py::arg("strSettingsFile") = defaultConfigFile,
                              py::arg("config") = ORB_SLAM2::TrackerConfig::defaultSettings(),
                              py::arg("sensor") = ORB_SLAM2::System::eSensor::MONOCULAR,
                              py::arg("bUseViewer") = false);

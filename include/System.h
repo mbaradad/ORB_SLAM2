@@ -136,7 +136,11 @@ public:
 
     vector<pair<double, cv::Mat> > GetAllPoses();
 
-
+    static ORBVocabulary* createOrbVocabulary(string strVocFile) {
+        ORBVocabulary* toReturn = new ORBVocabulary();
+        toReturn->loadFromTextFile(strVocFile);
+        return toReturn;
+    }
 private:
 
     // Input sensor
